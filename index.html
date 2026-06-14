@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wilson 时间管理助手</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .button-group button {
+            flex: 1;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .task-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-info h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .task-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .task-progress {
+            flex: 1;
+            margin: 0 15px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        .task-time {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .weekly-comparison {
+            margin-top: 20px;
+        }
+
+        .comparison-item {
+            display: grid;
+            grid-template-columns: 150px 1fr 100px;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .comparison-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .comparison-bars {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .bar-label {
+            font-size: 0.85em;
+            color: #666;
+            min-width: 50px;
+        }
+
+        .bar {
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 5px;
+            color: white;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .bar-plan {
+            background: #667eea;
+        }
+
+        .bar-actual {
+            background: #764ba2;
+        }
+
+        .comparison-percent {
+            text-align: right;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 1em;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .insight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .insight-box h4 {
+            margin-bottom: 10px;
+        }
+
+        .insight-box p {
+            font-size: 0.95em;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .delete-btn {
+            background: #ff6b6b;
+            padding: 6px 12px;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+
+        .delete-btn:hover {
+            background: #ff5252;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-item {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⏰ Wilson 时间管理助手</h1>
+            <p>用数据驱动的方法管理你的申请季</p>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3>📅 今日记录</h3>
+                <div class="value" id="todayCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>⏱️ 本周总时长</h3>
+                <div class="value" id="weekTotal">0h</div>
+            </div>
+            <div class="stat-card">
+                <h3>🎯 本周目标达成</h3>
+                <div class="value" id="goalProgress">0%</div>
+            </div>
+            <div class="stat-card">
+                <h3>📊 记录天数</h3>
+                <div class="value" id="recordDays">0</div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- 左侧：记录面板 -->
+            <div class="card">
+                <h2>📝 每日时间记录</h2>
+                
+                <div class="tabs">
+                    <button class="tab-button active" onclick="switchTab('record')">新增记录</button>
+                    <button class="tab-button" onclick="switchTab('today')">今日总览</button>
+                </div>
+
+                <div id="record" class="tab-content active">
+                    <div class="form-group">
+                        <label>📅 日期</label>
+                        <input type="date" id="recordDate" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>📚 任务类别</label>
+                        <select id="taskType">
+                            <option value="">-- 选择任务 --</option>
+                            <option value="IELTS">🎯 雅思准备</option>
+                            <option value="Writing">✍️ 申请文书</option>
+                            <option value="School">🏫 学校任务</option>
+                            <option value="Rest">🎮 休息娱乐</option>
+                            <option value="Other">📌 其他</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>⏱️ 时间（分钟）</label>
+                        <input type="number" id="taskTime" placeholder="请输入分钟数" min="0" max="1440" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>📝 备注（可选）</label>
+                        <input type="text" id="taskNote" placeholder="e.g., 做了雅思阅读练习题" />
+                    </div>
+
+                    <button onclick="addRecord()" style="width: 100%;">✅ 添加记录</button>
+                </div>
+
+                <div id="today" class="tab-content">
+                    <div id="todayList"></div>
+                </div>
+            </div>
+
+            <!-- 右侧：可视化面板 -->
+            <div class="card">
+                <h2>📊 时间分配可视化</h2>
+                
+                <div class="tabs">
+                    <button class="tab-button active" onclick="switchChart('pie')">饼图分布</button>
+                    <button class="tab-button" onclick="switchChart('bar')">柱状图</button>
+                </div>
+
+                <div id="pie" class="tab-content active">
+                    <div class="chart-container">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+
+                <div id="bar" class="tab-content">
+                    <div class="chart-container">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="insight-box" id="insight">
+                    <h4>💡 本周洞察</h4>
+                    <p id="insightText">开始记录数据，我会给你智能建议...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部：周报面板 -->
+        <div class="card">
+            <h2>📈 周报分析 - 计划 vs 实际</h2>
+            
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchReport('comparison')">目标对比</button>
+                <button class="tab-button" onclick="switchReport('detail')">详细数据</button>
+                <button class="tab-button" onclick="switchReport('export')">导出数据</button>
+            </div>
+
+            <div id="comparison" class="tab-content active">
+                <div class="weekly-comparison" id="weeklyComparison"></div>
+            </div>
+
+            <div id="detail" class="tab-content">
+                <div id="detailTable"></div>
+            </div>
+
+            <div id="export" class="tab-content">
+                <p style="margin-bottom: 15px;">📥 导出你的时间管理数据为JSON格式</p>
+                <button onclick="exportData()" style="width: 100%;">⬇️ 导出JSON</button>
+                <button onclick="importData()" style="width: 100%; margin-top: 10px;">⬆️ 导入数据</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport()" />
+                <button onclick="clearAllData()" style="width: 100%; margin-top: 10px; background: #ff6b6b;">🗑️ 清空所有数据</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

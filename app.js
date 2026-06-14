@@ -401,8 +401,10 @@ function switchTab(tabName) {
     });
 
     // 更新按钮状态
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('active');
+    document.querySelectorAll('.tabs').forEach(tabsContainer => {
+        tabsContainer.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
     });
 
     // 显示目标标签
@@ -421,8 +423,10 @@ function switchChart(chartType) {
 
     document.getElementById(chartType).classList.add('active');
     
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('active');
+    document.querySelectorAll('.tabs').forEach(tabsContainer => {
+        tabsContainer.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
     });
     event.target.classList.add('active');
 }
@@ -435,8 +439,10 @@ function switchReport(reportType) {
 
     document.getElementById(reportType).classList.add('active');
     
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('active');
+    document.querySelectorAll('.tabs').forEach(tabsContainer => {
+        tabsContainer.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
     });
     event.target.classList.add('active');
 }
